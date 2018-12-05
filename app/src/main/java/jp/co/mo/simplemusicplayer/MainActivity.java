@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private MusicInfo mCurrentMusicInfo;
 
-    private int mediaCurrentPostion = 0;
+    private int mMediaCurrentPostion = 0;
 
 
     @Override
@@ -45,21 +45,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // TODO: use databinding
 
         mDurationSeekBar = findViewById(R.id.durationSeekBar);
-//        mDurationSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-//            @Override
-//            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-//
-//            }
-//
-//            @Override
-//            public void onStartTrackingTouch(SeekBar seekBar) {
-//
-//            }
-//
-//            @Override
-//            public void onStopTrackingTouch(SeekBar seekBar) {
-//            }
-//        });
+        mDurationSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                mMediaCurrentPostion = progress;
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                mMp.seekTo(mMediaCurrentPostion);
+            }
+        });
         mStartBtn = findViewById(R.id.startBtn);
         mStartBtn.setOnClickListener(this);
         mStopBtn = findViewById(R.id.stopBtn);
@@ -142,7 +143,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     private void loadMusicList() {
-        final List<MusicInfo> musicInfos = createMusicList();
+        final List<MusicInfo> musicInfos = getMusicList();
         MusicInfoAdapter adapter = new MusicInfoAdapter(this, musicInfos);
         mMusicListView.setAdapter(adapter);
         mMusicListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -159,7 +160,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void startMediaPlayer() {
         if (mMp != null) {
             if(!mMp.isPlaying()) {
-                mMp.seekTo(mediaCurrentPostion);
+                mMp.seekTo(mMediaCurrentPostion);
                 mMp.start();
             }
         } else {
@@ -184,19 +185,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mMp.stop();
             mMp.release();
             mMp = null;
-            mediaCurrentPostion = 0;
-            mDurationSeekBar.setProgress(mediaCurrentPostion);
+            mMediaCurrentPostion = 0;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                mDurationSeekBar.setProgress(mDurationSeekBar.getMin());
+            } else {
+                // does not working setProgress when i just set mMediaCurrentPostion. So set twise.
+                mDurationSeekBar.setProgress(1);
+                mDurationSeekBar.setProgress(mMediaCurrentPostion);
+            }
         }
     }
 
     private void pauseMediaPlayer() {
         if (mMp != null && mMp.isPlaying()) {
-            mediaCurrentPostion = mMp.getCurrentPosition();
+            mMediaCurrentPostion = mMp.getCurrentPosition();
             mMp.pause();
         }
     }
 
-    private List<MusicInfo> createMusicList() {
+    private List<MusicInfo> getMusicList() {
         final List<MusicInfo> musicInfos = new ArrayList<>();
         musicInfos.add(new MusicInfo("/storage/self/primary/Download/1.mp3",
                 "music1",
