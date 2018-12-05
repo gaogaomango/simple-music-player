@@ -2,9 +2,12 @@ package jp.co.mo.simplemusicplayer;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -205,18 +208,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private List<MusicInfo> getMusicList() {
         final List<MusicInfo> musicInfos = new ArrayList<>();
-        musicInfos.add(new MusicInfo("/storage/self/primary/Download/1.mp3",
-                "music1",
-                "one",
-                "number 1 singer"));
-        musicInfos.add(new MusicInfo("/storage/self/primary/Download/2.mp3",
-                "music2",
-                "two",
-                "number 2 singer"));
-        musicInfos.add(new MusicInfo("/storage/self/primary/Download/3.mp3",
-                "music3",
-                "three",
-                "number 3 singer"));
+
+        Uri allSongsUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        String selection = MediaStore.Audio.Media.IS_MUSIC + " != 0";
+
+        Cursor cursor = getContentResolver().query(allSongsUri, null, selection, null, null);
+        if(cursor != null) {
+            if(cursor.moveToFirst()) {
+                do {
+                    String songName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DISPLAY_NAME));
+                    String fullPath = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.DATA));
+                    String albumName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ALBUM));
+                    String artistName = cursor.getString(cursor.getColumnIndex(MediaStore.Audio.Media.ARTIST));
+                    musicInfos.add(new MusicInfo(fullPath, songName, albumName, artistName));
+                 } while (cursor.moveToNext());
+            }
+            cursor.close();
+        }
 
         return musicInfos;
     }
