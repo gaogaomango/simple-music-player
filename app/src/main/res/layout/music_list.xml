@@ -3,20 +3,23 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/darker_gray"
+    android:layout_marginBottom="5dp"
     android:orientation="vertical">
 
     <TextView
         android:id="@+id/musicTitle"
         android:layout_width="match_parent"
-        android:layout_height="30dp"
-        android:textSize="40dp"
-        android:background="@android:color/white" />
+        android:layout_height="wrap_content"
+        android:background="@android:color/white"
+        android:text="title"
+        android:textSize="40dp" />
 
     <TextView
         android:id="@+id/singerName"
         android:layout_width="match_parent"
-        android:layout_height="20dp"
-        android:textSize="20dp"
-        android:background="@android:color/white" />
+        android:layout_height="wrap_content"
+        android:background="@android:color/white"
+        android:text="singer name"
+        android:textSize="20dp" />
 
 </LinearLayout>
