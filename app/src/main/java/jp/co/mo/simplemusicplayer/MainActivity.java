@@ -4,10 +4,11 @@ import android.Manifest;
 import android.content.pm.PackageManager;
 import android.media.MediaPlayer;
 import android.os.Build;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -19,7 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final int REQUEST_CODE_ASK_PERMISSIONS = 123;
 
@@ -30,6 +31,10 @@ public class MainActivity extends AppCompatActivity {
     private ListView mMusicListView;
 
     private MediaPlayer mMp;
+
+    private MusicInfo mCurrentMusicInfo;
+
+    private int mediaCurrentPostion = 0;
 
 
     @Override
@@ -56,8 +61,11 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        });
         mStartBtn = findViewById(R.id.startBtn);
+        mStartBtn.setOnClickListener(this);
         mStopBtn = findViewById(R.id.stopBtn);
+        mStopBtn.setOnClickListener(this);
         mPauseBtn = findViewById(R.id.pauseBtn);
+        mPauseBtn.setOnClickListener(this);
         mMusicListView = findViewById(R.id.musicListView);
 
         new Thread(new Runnable() {
@@ -117,6 +125,22 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.startBtn:
+                startMediaPlayer();
+                break;
+            case R.id.stopBtn:
+                stopMediaPlayer();
+                break;
+            case R.id.pauseBtn:
+                pauseMediaPlayer();
+                break;
+        }
+    }
+
+
     private void loadMusicList() {
         final List<MusicInfo> musicInfos = createMusicList();
         MusicInfoAdapter adapter = new MusicInfoAdapter(this, musicInfos);
@@ -124,20 +148,52 @@ public class MainActivity extends AppCompatActivity {
         mMusicListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                // before start media player, stop the current media player.
+                stopMediaPlayer();
+                mCurrentMusicInfo = musicInfos.get(position);
+                startMediaPlayer();
+            }
+        });
+    }
 
-                MusicInfo mInfo = musicInfos.get(position);
+    private void startMediaPlayer() {
+        if (mMp != null) {
+            if(!mMp.isPlaying()) {
+                mMp.seekTo(mediaCurrentPostion);
+                mMp.start();
+            }
+        } else {
+            if(mCurrentMusicInfo != null) {
                 mMp = new MediaPlayer();
                 try {
-                    mMp.setDataSource(mInfo.getPath());
-                    mMp.prepare();
-                    mMp.start();
-                    mDurationSeekBar.setMax(mMp.getDuration());
+                    if (!TextUtils.isEmpty(mCurrentMusicInfo.getPath())) {
+                        mMp.setDataSource(mCurrentMusicInfo.getPath());
+                        mMp.prepare();
+                        mMp.start();
+                        mDurationSeekBar.setMax(mMp.getDuration());
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
             }
-        });
+        }
+    }
+
+    private void stopMediaPlayer() {
+        if (mMp != null && mMp.isPlaying()) {
+            mMp.stop();
+            mMp.release();
+            mMp = null;
+            mediaCurrentPostion = 0;
+            mDurationSeekBar.setProgress(mediaCurrentPostion);
+        }
+    }
+
+    private void pauseMediaPlayer() {
+        if (mMp != null && mMp.isPlaying()) {
+            mediaCurrentPostion = mMp.getCurrentPosition();
+            mMp.pause();
+        }
     }
 
     private List<MusicInfo> createMusicList() {
